@@ -1,3 +1,6 @@
+using Microsoft.Extensions.Configuration;
+using MongoDB.Driver;
+
 namespace SampleWebAppWithMongoDbAndDocker
 {
 	public class Program
@@ -9,6 +12,12 @@ namespace SampleWebAppWithMongoDbAndDocker
 			// Add services to the container.
 
 			builder.Services.AddControllers();
+
+			// Custom services
+			string connection = builder.Configuration.GetConnectionString("DefaultConnection");
+			string dbName = builder.Configuration.GetConnectionString("DefaultDb");
+			builder.Services.AddSingleton(new MongoClient(connection).GetDatabase(dbName));
+
 			// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 			builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddSwaggerGen();
@@ -25,7 +34,6 @@ namespace SampleWebAppWithMongoDbAndDocker
 			app.UseHttpsRedirection();
 
 			app.UseAuthorization();
-
 
 			app.MapControllers();
 
