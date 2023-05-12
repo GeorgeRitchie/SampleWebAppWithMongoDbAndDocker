@@ -35,6 +35,7 @@ namespace SampleWebAppWithMongoDbAndDocker
 
 			app.UseAuthorization();
 
+
 			app.MapControllers();
 
 			app.Run();
