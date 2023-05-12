@@ -1,11 +1,12 @@
 ﻿using MongoDB.Bson;
 
-namespace SampleWebAppWithMongoDbAndDocker.Models
+namespace SampleWebAppWithMongoDbAndDocker.ViewModels
 {
-	public class User
+	public class UpdateTeacherModel
 	{
 		public Guid Id { get; set; }
 		public string Name { get; set; }
 		public string Phone { get; set; }
+		public string Major { get; set; }
 	}
 }
