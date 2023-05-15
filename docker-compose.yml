@@ -6,6 +6,8 @@ services:
     build:
       context: .
       dockerfile: SampleWebAppWithMongoDbAndDocker/Dockerfile
+    environment:
+      - AddSwaggerToProduction=true
     depends_on: 
         - mongo
 

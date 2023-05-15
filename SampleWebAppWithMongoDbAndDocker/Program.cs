@@ -1,3 +1,4 @@
+using Amazon.Util.Internal.PlatformServices;
 using Microsoft.Extensions.Configuration;
 using MongoDB.Driver;
 
@@ -24,8 +25,10 @@ namespace SampleWebAppWithMongoDbAndDocker
 
 			var app = builder.Build();
 
+			string addSwaggerToProduction = Environment.GetEnvironmentVariable("AddSwaggerToProduction")?.ToLower() ?? "false";
+			
 			// Configure the HTTP request pipeline.
-			if (app.Environment.IsDevelopment())
+			if (app.Environment.IsDevelopment() || addSwaggerToProduction == "true")
 			{
 				app.UseSwagger();
 				app.UseSwaggerUI();
