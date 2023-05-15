@@ -8,8 +8,10 @@ using SampleWebAppWithMongoDbAndDocker.ViewModels;
 
 namespace SampleWebAppWithMongoDbAndDocker.Controllers
 {
-	[Route("api/[controller]/[action]")]
 	[ApiController]
+	[ApiVersion("1.0")]
+	[ApiVersion("2.0")]
+	[Route("api/{version:apiVersion}/[controller]/[action]")]
 	public class TeacherController : ControllerBase
 	{
 		private readonly IMongoCollection<Teacher> teacherCollection;

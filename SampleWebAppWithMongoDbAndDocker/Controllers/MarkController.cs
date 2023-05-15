@@ -9,8 +9,9 @@ using System.Text.Json;
 
 namespace SampleWebAppWithMongoDbAndDocker.Controllers
 {
-	[Route("api/[controller]")]
 	[ApiController]
+	[ApiVersion("2.0")]
+	[Route("api/{version:apiVersion}/[controller]/[action]")]
 	public class MarkController : ControllerBase
 	{
 		private readonly IMongoCollection<Mark> markCollection;
