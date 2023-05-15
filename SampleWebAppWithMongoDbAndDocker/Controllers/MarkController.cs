@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+//using MongoDB.Bson;
 using MongoDB.Driver;
 using SampleWebAppWithMongoDbAndDocker.Models;
 using SampleWebAppWithMongoDbAndDocker.ViewModels;
+using System.Text.Json;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -20,7 +22,7 @@ namespace SampleWebAppWithMongoDbAndDocker.Controllers
 
 		// GET api/<MarkController>/5
 		[HttpGet]
-		public IEnumerable<Mark> Get([FromQuery] MarkFilter filter)
+		public JsonResult Get([FromQuery] MarkFilter filter)
 		{
 			var filterDB = Builders<Mark>.Filter.Eq(p => p.TeacherId, filter.TeacherId);
 
@@ -36,12 +38,12 @@ namespace SampleWebAppWithMongoDbAndDocker.Controllers
 			if (filter.MarkId != null)
 				filterDB = filterDB | Builders<Mark>.Filter.Eq(p => p.Id, filter.MarkId);
 
-			return markCollection.Find(filterDB).ToList();
+			return new JsonResult(new { Marks = markCollection.Find(filterDB).ToList() });
 		}
 
 		// POST api/<MarkController>
 		[HttpPost]
-		public Guid Create([FromBody] CreateMarkModel newMark)
+		public JsonResult Create([FromBody] CreateMarkModel newMark)
 		{
 			var mark = new Mark
 			{
@@ -52,16 +54,17 @@ namespace SampleWebAppWithMongoDbAndDocker.Controllers
 				TeacherId = newMark.TeacherId
 			};
 			markCollection.InsertOne(mark);
-			return mark.Id;
+			return new JsonResult(new { Id = mark.Id });
 		}
 
 		// PUT api/<MarkController>/5
 		[HttpPut]
-		public long Update([FromBody] UpdateMarkModel newMark)
+		public JsonResult Update([FromBody] UpdateMarkModel newMark)
 		{
 			var filter = Builders<Mark>.Filter.Eq(p => p.Id, newMark.Id);
 			var updater = Builders<Mark>.Update.Set(p => p.Value, newMark.Value);
-			return markCollection.UpdateOne(filter, updater).ModifiedCount;
+			var modifiedCount = markCollection.UpdateOne(filter, updater).ModifiedCount;
+			return new JsonResult(new { ModifiedObjectsAmount = modifiedCount });
 		}
 
 		// DELETE api/<MarkController>/5

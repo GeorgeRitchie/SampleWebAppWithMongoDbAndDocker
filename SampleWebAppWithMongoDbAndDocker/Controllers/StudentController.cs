@@ -22,21 +22,21 @@ namespace SampleWebAppWithMongoDbAndDocker.Controllers
 
 		// GET: api/<StudentController>
 		[HttpGet]
-		public IEnumerable<Student> Get()
+		public JsonResult Get()
 		{
-			return studentsCollection.Find("{}").ToList();
+			return new JsonResult(new { Students = studentsCollection.Find("{}").ToList() });
 		}
 
 		// GET api/<StudentController>/5
 		[HttpGet("{id}")]
-		public Student Get(Guid id)
+		public JsonResult Get(Guid id)
 		{
-			return studentsCollection.Find(p => p.Id == id).FirstOrDefault();
+			return new JsonResult(new { Student = studentsCollection.Find(p => p.Id == id).FirstOrDefault() });
 		}
 
 		// POST api/<StudentController>
 		[HttpPost]
-		public Guid Create([FromBody] CreateStudentModel newStudent)
+		public JsonResult Create([FromBody] CreateStudentModel newStudent)
 		{
 			var student = new Student
 			{
@@ -45,16 +45,16 @@ namespace SampleWebAppWithMongoDbAndDocker.Controllers
 				TeacherId = newStudent.TeacherId,//teachersCollection.Find(p => p.Id == newStudent.TeacherId).FirstOrDefault(),
 			};
 			studentsCollection.InsertOne(student);
-			return student.Id;
+			return new JsonResult(new { Id = student.Id });
 		}
 
 		// PUT api/<StudentController>/5
 		[HttpPut]
-		public long Update([FromBody] UpdateStudentModel newStudent)
+		public JsonResult Update([FromBody] UpdateStudentModel newStudent)
 		{
 			var filter = Builders<Student>.Filter.Eq(p => p.Id, newStudent.Id);
 			var updater = Builders<Student>.Update.Set(p => p.Name, newStudent.Name).Set(p => p.Phone, newStudent.Phone).Set(p => p.TeacherId, newStudent.TeacherId); //teachersCollection.Find(t => t.Id == newStudent.TeacherId).FirstOrDefault());
-			return studentsCollection.UpdateOne(filter, updater).ModifiedCount;
+			return new JsonResult(new { ModifiedObjectsAmount = studentsCollection.UpdateOne(filter, updater).ModifiedCount });
 		}
 
 		// DELETE api/<StudentController>/5
