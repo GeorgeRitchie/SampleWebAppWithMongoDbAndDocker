@@ -1,9 +1,8 @@
-using Amazon.Util.Internal.PlatformServices;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
+using SampleWebAppWithMongoDbAndDocker.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace SampleWebAppWithMongoDbAndDocker
@@ -35,6 +34,19 @@ namespace SampleWebAppWithMongoDbAndDocker
 			builder.Services.AddApiVersioning();
 
 			var app = builder.Build();
+
+			{// Add user roles
+				var roles = new List<Role>()
+				{
+					new Role { Name = "admin" },
+					new Role { Name = "teacher" },
+					new Role { Name = "student" }
+				};
+
+				var db = app.Services.GetService<IMongoDatabase>();
+
+				db.GetCollection<Role>("Roles").InsertMany(roles);
+			}
 
 			string addSwaggerToProduction = Environment.GetEnvironmentVariable("AddSwaggerToProduction")?.ToLower() ?? "false";
 

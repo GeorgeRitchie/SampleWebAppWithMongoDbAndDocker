@@ -17,13 +17,16 @@ namespace SampleWebAppWithMongoDbAndDocker.Controllers
 	{
 		private readonly IMongoCollection<Student> studentsCollection;
 		private readonly IMongoCollection<Teacher> teachersCollection;
+		private readonly IMongoCollection<Role> roleCollection;
 
 		public StudentController(IMongoDatabase db)
 		{
 			studentsCollection = db.GetCollection<Student>("Students");
 			teachersCollection = db.GetCollection<Teacher>("TeacherId");
+			roleCollection = db.GetCollection<Role>("Roles");
 		}
 
+		[Authorize(Roles = "teacher, admin")]
 		[HttpGet]
 		public JsonResult Get()
 		{
@@ -45,7 +48,7 @@ namespace SampleWebAppWithMongoDbAndDocker.Controllers
 				return BadRequest("This email is used!");
 			}
 
-			if(teachersCollection.Find(p=>p.Id == newStudent.TeacherId).FirstOrDefault() == null)
+			if (teachersCollection.Find(p => p.Id == newStudent.TeacherId).FirstOrDefault() == null)
 			{
 				return BadRequest($"Could not find teacher with Id {newStudent.TeacherId}");
 			}
@@ -56,7 +59,8 @@ namespace SampleWebAppWithMongoDbAndDocker.Controllers
 				Phone = newStudent.Phone,
 				TeacherId = newStudent.TeacherId,
 				Email = newStudent.Email,
-				Password = newStudent.Password
+				Password = newStudent.Password,
+				RoleId = roleCollection.Find(p => p.Name == "student").First().Id
 			};
 
 			studentsCollection.InsertOne(student);

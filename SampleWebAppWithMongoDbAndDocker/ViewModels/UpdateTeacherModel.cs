@@ -1,6 +1,4 @@
-﻿using MongoDB.Bson;
-
-namespace SampleWebAppWithMongoDbAndDocker.ViewModels
+﻿namespace SampleWebAppWithMongoDbAndDocker.ViewModels
 {
 	public class UpdateTeacherModel
 	{

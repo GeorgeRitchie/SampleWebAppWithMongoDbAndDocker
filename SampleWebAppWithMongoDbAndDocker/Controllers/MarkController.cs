@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 using SampleWebAppWithMongoDbAndDocker.Models;
 using SampleWebAppWithMongoDbAndDocker.ViewModels;
-using System.Text.Json;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -12,7 +11,7 @@ namespace SampleWebAppWithMongoDbAndDocker.Controllers
 	[ApiController]
 	[ApiVersion("2.0")]
 	[Route("api/{version:apiVersion}/[controller]/[action]")]
-	[Authorize]
+	[Authorize(Roles = "teacher, admin")]
 	public class MarkController : ControllerBase
 	{
 		private readonly IMongoCollection<Mark> markCollection;

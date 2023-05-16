@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Bson;
 using MongoDB.Driver;
 using SampleWebAppWithMongoDbAndDocker.Models;
 using SampleWebAppWithMongoDbAndDocker.ViewModels;
@@ -13,16 +12,19 @@ namespace SampleWebAppWithMongoDbAndDocker.Controllers
 	[ApiVersion("1.0")]
 	[ApiVersion("2.0")]
 	[Route("api/{version:apiVersion}/[controller]/[action]")]
-	[Authorize]
+	[Authorize(Roles = "teacher, admin")]
 	public class TeacherController : ControllerBase
 	{
 		private readonly IMongoCollection<Teacher> teacherCollection;
+		private readonly IMongoCollection<Role> roleCollection;
 
 		public TeacherController(IMongoDatabase db)
 		{
 			teacherCollection = db.GetCollection<Teacher>("Teachers");
+			roleCollection = db.GetCollection<Role>("Roles");
 		}
 
+		//[Authorize(Roles = "admin")]
 		[HttpGet]
 		public JsonResult Get()
 		{
@@ -50,7 +52,8 @@ namespace SampleWebAppWithMongoDbAndDocker.Controllers
 				Phone = newTeacher.Phone,
 				Major = newTeacher.Major,
 				Email = newTeacher.Email,
-				Password = newTeacher.Password
+				Password = newTeacher.Password,
+				RoleId = roleCollection.Find(p => p.Name == "teacher").First().Id
 			};
 
 			teacherCollection.InsertOne(teacher);
