@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 using SampleWebAppWithMongoDbAndDocker.Models;
 using SampleWebAppWithMongoDbAndDocker.ViewModels;
@@ -11,55 +12,71 @@ namespace SampleWebAppWithMongoDbAndDocker.Controllers
 	[ApiVersion("1.0")]
 	[ApiVersion("2.0")]
 	[Route("api/{version:apiVersion}/[controller]/[action]")]
+	[Authorize]
 	public class StudentController : ControllerBase
 	{
 		private readonly IMongoCollection<Student> studentsCollection;
-		//private readonly IMongoCollection<Teacher> teachersCollection;
+		private readonly IMongoCollection<Teacher> teachersCollection;
 
 		public StudentController(IMongoDatabase db)
 		{
 			studentsCollection = db.GetCollection<Student>("Students");
-			//teachersCollection = db.GetCollection<Teacher>("TeacherId");
+			teachersCollection = db.GetCollection<Teacher>("TeacherId");
 		}
 
-		// GET: api/<StudentController>
 		[HttpGet]
 		public JsonResult Get()
 		{
 			return new JsonResult(new { Students = studentsCollection.Find("{}").ToList() });
 		}
 
-		// GET api/<StudentController>/5
 		[HttpGet("{id}")]
 		public JsonResult Get(Guid id)
 		{
 			return new JsonResult(new { Student = studentsCollection.Find(p => p.Id == id).FirstOrDefault() });
 		}
 
-		// POST api/<StudentController>
+		[AllowAnonymous]
 		[HttpPost]
-		public JsonResult Create([FromBody] CreateStudentModel newStudent)
+		public ActionResult Create([FromBody] CreateStudentModel newStudent)
 		{
+			if (studentsCollection.Find(p => p.Email == newStudent.Email).FirstOrDefault() != default)
+			{
+				return BadRequest("This email is used!");
+			}
+
+			if(teachersCollection.Find(p=>p.Id == newStudent.TeacherId).FirstOrDefault() == null)
+			{
+				return BadRequest($"Could not find teacher with Id {newStudent.TeacherId}");
+			}
+
 			var student = new Student
 			{
 				Name = newStudent.Name,
 				Phone = newStudent.Phone,
-				TeacherId = newStudent.TeacherId,//teachersCollection.Find(p => p.Id == newStudent.TeacherId).FirstOrDefault(),
+				TeacherId = newStudent.TeacherId,
+				Email = newStudent.Email,
+				Password = newStudent.Password
 			};
+
 			studentsCollection.InsertOne(student);
-			return new JsonResult(new { Id = student.Id });
+
+			return RedirectToAction("LogIn", "User", new LogInModel { Email = student.Email, Password = student.Password });
 		}
 
-		// PUT api/<StudentController>/5
 		[HttpPut]
-		public JsonResult Update([FromBody] UpdateStudentModel newStudent)
+		public ActionResult Update([FromBody] UpdateStudentModel newStudent)
 		{
+			if (teachersCollection.Find(p => p.Id == newStudent.TeacherId).FirstOrDefault() == null)
+			{
+				return BadRequest($"Could not find teacher with Id {newStudent.TeacherId}");
+			}
+
 			var filter = Builders<Student>.Filter.Eq(p => p.Id, newStudent.Id);
-			var updater = Builders<Student>.Update.Set(p => p.Name, newStudent.Name).Set(p => p.Phone, newStudent.Phone).Set(p => p.TeacherId, newStudent.TeacherId); //teachersCollection.Find(t => t.Id == newStudent.TeacherId).FirstOrDefault());
+			var updater = Builders<Student>.Update.Set(p => p.Name, newStudent.Name).Set(p => p.Phone, newStudent.Phone).Set(p => p.TeacherId, newStudent.TeacherId);
 			return new JsonResult(new { ModifiedObjectsAmount = studentsCollection.UpdateOne(filter, updater).ModifiedCount });
 		}
 
-		// DELETE api/<StudentController>/5
 		[HttpDelete("{id}")]
 		public void Delete(Guid id)
 		{

@@ -1,4 +1,5 @@
 using Amazon.Util.Internal.PlatformServices;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
@@ -21,6 +22,8 @@ namespace SampleWebAppWithMongoDbAndDocker
 			string connection = builder.Configuration.GetConnectionString("DefaultConnection");
 			string dbName = builder.Configuration.GetConnectionString("DefaultDb");
 			builder.Services.AddSingleton(new MongoClient(connection).GetDatabase(dbName));
+
+			builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie();
 
 			// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 			builder.Services.AddVersionedApiExplorer(opt => opt.GroupNameFormat = "'v'VVV");
@@ -56,6 +59,7 @@ namespace SampleWebAppWithMongoDbAndDocker
 
 			app.UseCors(builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 
+			app.UseAuthentication();
 			app.UseAuthorization();
 
 			app.UseApiVersioning();

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using SampleWebAppWithMongoDbAndDocker.Models;
@@ -12,6 +13,7 @@ namespace SampleWebAppWithMongoDbAndDocker.Controllers
 	[ApiVersion("1.0")]
 	[ApiVersion("2.0")]
 	[Route("api/{version:apiVersion}/[controller]/[action]")]
+	[Authorize]
 	public class TeacherController : ControllerBase
 	{
 		private readonly IMongoCollection<Teacher> teacherCollection;
@@ -21,30 +23,41 @@ namespace SampleWebAppWithMongoDbAndDocker.Controllers
 			teacherCollection = db.GetCollection<Teacher>("Teachers");
 		}
 
-		// GET: api/<TeacherController>
 		[HttpGet]
 		public JsonResult Get()
 		{
 			return new JsonResult(new { Teachers = teacherCollection.Find("{}").ToList() });
 		}
 
-		// GET api/<TeacherController>/5
 		[HttpGet("{id}")]
 		public JsonResult Get(Guid id)
 		{
 			return new JsonResult(new { Teacher = teacherCollection.Find(p => p.Id == id).FirstOrDefault() });
 		}
 
-		// POST api/<TeacherController>
+		[AllowAnonymous]
 		[HttpPost]
-		public JsonResult Create([FromBody] CreateTeacherModel teacherData)
+		public ActionResult Create([FromBody] CreateTeacherModel newTeacher)
 		{
-			var teacher = new Teacher { Name = teacherData.Name, Phone = teacherData.Phone, Major = teacherData.Major };
+			if (teacherCollection.Find(p => p.Email == newTeacher.Email).FirstOrDefault() != default)
+			{
+				return BadRequest("This email is used!");
+			}
+
+			var teacher = new Teacher
+			{
+				Name = newTeacher.Name,
+				Phone = newTeacher.Phone,
+				Major = newTeacher.Major,
+				Email = newTeacher.Email,
+				Password = newTeacher.Password
+			};
+
 			teacherCollection.InsertOne(teacher);
-			return new JsonResult(new { Id = teacher.Id });
+
+			return RedirectToAction("LogIn", "User", new LogInModel { Email = teacher.Email, Password = teacher.Password });
 		}
 
-		// PUT api/<TeacherController>/5
 		[HttpPut]
 		public JsonResult Update([FromBody] UpdateTeacherModel newTeacher)
 		{
@@ -53,7 +66,6 @@ namespace SampleWebAppWithMongoDbAndDocker.Controllers
 			return new JsonResult(new { ModifiedObjectsAmount = teacherCollection.UpdateOne(filter, updater).ModifiedCount });
 		}
 
-		// DELETE api/<TeacherController>/5
 		[HttpDelete("{id}")]
 		public ActionResult Delete(Guid id)
 		{

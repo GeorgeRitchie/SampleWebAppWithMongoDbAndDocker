@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
-//using MongoDB.Bson;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 using SampleWebAppWithMongoDbAndDocker.Models;
 using SampleWebAppWithMongoDbAndDocker.ViewModels;
@@ -12,6 +12,7 @@ namespace SampleWebAppWithMongoDbAndDocker.Controllers
 	[ApiController]
 	[ApiVersion("2.0")]
 	[Route("api/{version:apiVersion}/[controller]/[action]")]
+	[Authorize]
 	public class MarkController : ControllerBase
 	{
 		private readonly IMongoCollection<Mark> markCollection;
@@ -21,7 +22,6 @@ namespace SampleWebAppWithMongoDbAndDocker.Controllers
 			markCollection = db.GetCollection<Mark>("Marks");
 		}
 
-		// GET api/<MarkController>/5
 		[HttpGet]
 		public JsonResult Get([FromQuery] MarkFilter filter)
 		{
@@ -42,7 +42,6 @@ namespace SampleWebAppWithMongoDbAndDocker.Controllers
 			return new JsonResult(new { Marks = markCollection.Find(filterDB).ToList() });
 		}
 
-		// POST api/<MarkController>
 		[HttpPost]
 		public JsonResult Create([FromBody] CreateMarkModel newMark)
 		{
@@ -58,7 +57,6 @@ namespace SampleWebAppWithMongoDbAndDocker.Controllers
 			return new JsonResult(new { Id = mark.Id });
 		}
 
-		// PUT api/<MarkController>/5
 		[HttpPut]
 		public JsonResult Update([FromBody] UpdateMarkModel newMark)
 		{
@@ -68,7 +66,6 @@ namespace SampleWebAppWithMongoDbAndDocker.Controllers
 			return new JsonResult(new { ModifiedObjectsAmount = modifiedCount });
 		}
 
-		// DELETE api/<MarkController>/5
 		[HttpDelete("{id}")]
 		public void Delete(Guid id)
 		{
