@@ -27,3 +27,12 @@ services:
       ME_CONFIG_MONGODB_ADMINUSERNAME: root
       ME_CONFIG_MONGODB_ADMINPASSWORD: example
       ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
+
+  clientwebapp:
+    image: ${DOCKER_REGISTRY-}clientwebapp
+    build:
+      context: .
+      dockerfile: ClientWebApp/Dockerfile
+    depends_on:
+        - samplewebappwithmongodbanddocker
+
