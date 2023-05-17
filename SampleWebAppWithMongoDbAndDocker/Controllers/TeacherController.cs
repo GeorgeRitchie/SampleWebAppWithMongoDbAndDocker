@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using MongoDB.Bson;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 using SampleWebAppWithMongoDbAndDocker.Models;
 using SampleWebAppWithMongoDbAndDocker.ViewModels;
@@ -8,57 +8,71 @@ using SampleWebAppWithMongoDbAndDocker.ViewModels;
 
 namespace SampleWebAppWithMongoDbAndDocker.Controllers
 {
-	[ApiController]
 	[ApiVersion("1.0")]
 	[ApiVersion("2.0")]
 	[Route("api/{version:apiVersion}/[controller]/[action]")]
-	public class TeacherController : ControllerBase
+	[Authorize(Roles = "teacher, admin")]
+	public class TeacherController : ApiBaseController
 	{
 		private readonly IMongoCollection<Teacher> teacherCollection;
+		private readonly IMongoCollection<Role> roleCollection;
 
 		public TeacherController(IMongoDatabase db)
 		{
 			teacherCollection = db.GetCollection<Teacher>("Teachers");
+			roleCollection = db.GetCollection<Role>("Roles");
 		}
 
-		// GET: api/<TeacherController>
+		//[Authorize(Roles = "admin")]
 		[HttpGet]
-		public JsonResult Get()
+		public IActionResult Get()
 		{
-			return new JsonResult(new { Teachers = teacherCollection.Find("{}").ToList() });
+			return JsonActionResult(new { Teachers = teacherCollection.Find("{}").ToList() });
 		}
 
-		// GET api/<TeacherController>/5
 		[HttpGet("{id}")]
-		public JsonResult Get(Guid id)
+		public IActionResult Get(Guid id)
 		{
-			return new JsonResult(new { Teacher = teacherCollection.Find(p => p.Id == id).FirstOrDefault() });
+			return JsonActionResult(new { Teacher = teacherCollection.Find(p => p.Id == id).FirstOrDefault() });
 		}
 
-		// POST api/<TeacherController>
+		[AllowAnonymous]
 		[HttpPost]
-		public JsonResult Create([FromBody] CreateTeacherModel teacherData)
+		public IActionResult Create([FromBody] CreateTeacherModel newTeacher)
 		{
-			var teacher = new Teacher { Name = teacherData.Name, Phone = teacherData.Phone, Major = teacherData.Major };
+			if (teacherCollection.Find(p => p.Email == newTeacher.Email).FirstOrDefault() != default)
+			{
+				return JsonActionResultError(new string[] { "This email is used!" });
+			}
+
+			var teacher = new Teacher
+			{
+				Name = newTeacher.Name,
+				Phone = newTeacher.Phone,
+				Major = newTeacher.Major,
+				Email = newTeacher.Email,
+				Password = newTeacher.Password,
+				RoleId = roleCollection.Find(p => p.Name == "teacher").First().Id
+			};
+
 			teacherCollection.InsertOne(teacher);
-			return new JsonResult(new { Id = teacher.Id });
+
+			return RedirectToAction("LogIn", "User", new LogInModel { Email = teacher.Email, Password = teacher.Password });
 		}
 
-		// PUT api/<TeacherController>/5
 		[HttpPut]
-		public JsonResult Update([FromBody] UpdateTeacherModel newTeacher)
+		public IActionResult Update([FromBody] UpdateTeacherModel newTeacher)
 		{
 			var filter = Builders<Teacher>.Filter.Eq(p => p.Id, newTeacher.Id);
 			var updater = Builders<Teacher>.Update.Set(p => p.Name, newTeacher.Name).Set(p => p.Phone, newTeacher.Phone).Set(p => p.Major, newTeacher.Major);
-			return new JsonResult(new { ModifiedObjectsAmount = teacherCollection.UpdateOne(filter, updater).ModifiedCount });
+			return JsonActionResult(new { ModifiedObjectsAmount = teacherCollection.UpdateOne(filter, updater).ModifiedCount });
 		}
 
-		// DELETE api/<TeacherController>/5
 		[HttpDelete("{id}")]
-		public ActionResult Delete(Guid id)
+		public IActionResult Delete(Guid id)
 		{
 			teacherCollection.FindOneAndDelete(p => p.Id == id);
-			return NoContent();
+			return JsonActionResult();
 		}
 	}
 }

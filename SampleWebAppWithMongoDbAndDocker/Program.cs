@@ -1,8 +1,8 @@
-using Amazon.Util.Internal.PlatformServices;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
+using SampleWebAppWithMongoDbAndDocker.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace SampleWebAppWithMongoDbAndDocker
@@ -22,6 +22,8 @@ namespace SampleWebAppWithMongoDbAndDocker
 			string dbName = builder.Configuration.GetConnectionString("DefaultDb");
 			builder.Services.AddSingleton(new MongoClient(connection).GetDatabase(dbName));
 
+			builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie();
+
 			// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 			builder.Services.AddVersionedApiExplorer(opt => opt.GroupNameFormat = "'v'VVV");
 			builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
@@ -32,6 +34,19 @@ namespace SampleWebAppWithMongoDbAndDocker
 			builder.Services.AddApiVersioning();
 
 			var app = builder.Build();
+
+			{// Add user roles
+				var roles = new List<Role>()
+				{
+					new Role { Name = "admin" },
+					new Role { Name = "teacher" },
+					new Role { Name = "student" }
+				};
+
+				var db = app.Services.GetService<IMongoDatabase>();
+
+				db.GetCollection<Role>("Roles").InsertMany(roles);
+			}
 
 			string addSwaggerToProduction = Environment.GetEnvironmentVariable("AddSwaggerToProduction")?.ToLower() ?? "false";
 
@@ -56,6 +71,7 @@ namespace SampleWebAppWithMongoDbAndDocker
 
 			app.UseCors(builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 
+			app.UseAuthentication();
 			app.UseAuthorization();
 
 			app.UseApiVersioning();

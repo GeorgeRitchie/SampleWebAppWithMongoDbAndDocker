@@ -1,5 +1,4 @@
-﻿using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
+﻿using MongoDB.Bson.Serialization.Attributes;
 
 namespace SampleWebAppWithMongoDbAndDocker.Models
 {
@@ -8,6 +7,7 @@ namespace SampleWebAppWithMongoDbAndDocker.Models
 	{
 		public string Major { get; set; }
 
+		[BsonIgnore]
 		public List<Student> Students { get; set; }
 	}
 }
