@@ -8,12 +8,11 @@ using SampleWebAppWithMongoDbAndDocker.ViewModels;
 
 namespace SampleWebAppWithMongoDbAndDocker.Controllers
 {
-	[ApiController]
 	[ApiVersion("1.0")]
 	[ApiVersion("2.0")]
 	[Route("api/{version:apiVersion}/[controller]/[action]")]
 	[Authorize]
-	public class StudentController : ControllerBase
+	public class StudentController : ApiBaseController
 	{
 		private readonly IMongoCollection<Student> studentsCollection;
 		private readonly IMongoCollection<Teacher> teachersCollection;
@@ -28,29 +27,29 @@ namespace SampleWebAppWithMongoDbAndDocker.Controllers
 
 		[Authorize(Roles = "teacher, admin")]
 		[HttpGet]
-		public JsonResult Get()
+		public IActionResult Get()
 		{
-			return new JsonResult(new { Students = studentsCollection.Find("{}").ToList() });
+			return JsonActionResult(new { Students = studentsCollection.Find("{}").ToList() });
 		}
 
 		[HttpGet("{id}")]
-		public JsonResult Get(Guid id)
+		public IActionResult Get(Guid id)
 		{
-			return new JsonResult(new { Student = studentsCollection.Find(p => p.Id == id).FirstOrDefault() });
+			return JsonActionResult(new { Student = studentsCollection.Find(p => p.Id == id).FirstOrDefault() });
 		}
 
 		[AllowAnonymous]
 		[HttpPost]
-		public ActionResult Create([FromBody] CreateStudentModel newStudent)
+		public IActionResult Create([FromBody] CreateStudentModel newStudent)
 		{
 			if (studentsCollection.Find(p => p.Email == newStudent.Email).FirstOrDefault() != default)
 			{
-				return BadRequest("This email is used!");
+				return JsonActionResultError(new string[] { "This email is used!" });
 			}
 
 			if (teachersCollection.Find(p => p.Id == newStudent.TeacherId).FirstOrDefault() == null)
 			{
-				return BadRequest($"Could not find teacher with Id {newStudent.TeacherId}");
+				return JsonActionResultError(new string[] { $"Could not find teacher with Id {newStudent.TeacherId}" });
 			}
 
 			var student = new Student
@@ -69,7 +68,7 @@ namespace SampleWebAppWithMongoDbAndDocker.Controllers
 		}
 
 		[HttpPut]
-		public ActionResult Update([FromBody] UpdateStudentModel newStudent)
+		public IActionResult Update([FromBody] UpdateStudentModel newStudent)
 		{
 			if (teachersCollection.Find(p => p.Id == newStudent.TeacherId).FirstOrDefault() == null)
 			{
@@ -78,13 +77,14 @@ namespace SampleWebAppWithMongoDbAndDocker.Controllers
 
 			var filter = Builders<Student>.Filter.Eq(p => p.Id, newStudent.Id);
 			var updater = Builders<Student>.Update.Set(p => p.Name, newStudent.Name).Set(p => p.Phone, newStudent.Phone).Set(p => p.TeacherId, newStudent.TeacherId);
-			return new JsonResult(new { ModifiedObjectsAmount = studentsCollection.UpdateOne(filter, updater).ModifiedCount });
+			return JsonActionResult(new { ModifiedObjectsAmount = studentsCollection.UpdateOne(filter, updater).ModifiedCount });
 		}
 
 		[HttpDelete("{id}")]
-		public void Delete(Guid id)
+		public IActionResult Delete(Guid id)
 		{
 			studentsCollection.FindOneAndDelete(p => p.Id == id);
+			return JsonActionResult();
 		}
 	}
 }

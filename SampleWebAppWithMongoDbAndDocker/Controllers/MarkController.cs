@@ -8,11 +8,10 @@ using SampleWebAppWithMongoDbAndDocker.ViewModels;
 
 namespace SampleWebAppWithMongoDbAndDocker.Controllers
 {
-	[ApiController]
 	[ApiVersion("2.0")]
 	[Route("api/{version:apiVersion}/[controller]/[action]")]
 	[Authorize(Roles = "teacher, admin")]
-	public class MarkController : ControllerBase
+	public class MarkController : ApiBaseController
 	{
 		private readonly IMongoCollection<Mark> markCollection;
 
@@ -22,7 +21,7 @@ namespace SampleWebAppWithMongoDbAndDocker.Controllers
 		}
 
 		[HttpGet]
-		public JsonResult Get([FromQuery] MarkFilter filter)
+		public IActionResult Get([FromQuery] MarkFilter filter)
 		{
 			var filterDB = Builders<Mark>.Filter.Eq(p => p.TeacherId, filter.TeacherId);
 
@@ -38,11 +37,11 @@ namespace SampleWebAppWithMongoDbAndDocker.Controllers
 			if (filter.MarkId != null)
 				filterDB = filterDB | Builders<Mark>.Filter.Eq(p => p.Id, filter.MarkId);
 
-			return new JsonResult(new { Marks = markCollection.Find(filterDB).ToList() });
+			return JsonActionResult(new { Marks = markCollection.Find(filterDB).ToList() });
 		}
 
 		[HttpPost]
-		public JsonResult Create([FromBody] CreateMarkModel newMark)
+		public IActionResult Create([FromBody] CreateMarkModel newMark)
 		{
 			var mark = new Mark
 			{
@@ -53,22 +52,23 @@ namespace SampleWebAppWithMongoDbAndDocker.Controllers
 				TeacherId = newMark.TeacherId
 			};
 			markCollection.InsertOne(mark);
-			return new JsonResult(new { Id = mark.Id });
+			return JsonActionResult(new { Id = mark.Id });
 		}
 
 		[HttpPut]
-		public JsonResult Update([FromBody] UpdateMarkModel newMark)
+		public IActionResult Update([FromBody] UpdateMarkModel newMark)
 		{
 			var filter = Builders<Mark>.Filter.Eq(p => p.Id, newMark.Id);
 			var updater = Builders<Mark>.Update.Set(p => p.Value, newMark.Value);
 			var modifiedCount = markCollection.UpdateOne(filter, updater).ModifiedCount;
-			return new JsonResult(new { ModifiedObjectsAmount = modifiedCount });
+			return JsonActionResult(new { ModifiedObjectsAmount = modifiedCount });
 		}
 
 		[HttpDelete("{id}")]
-		public void Delete(Guid id)
+		public IActionResult Delete(Guid id)
 		{
 			markCollection.FindOneAndDelete(p => p.Id == id);
+			return JsonActionResult();
 		}
 	}
 }

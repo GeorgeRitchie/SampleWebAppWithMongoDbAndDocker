@@ -8,12 +8,11 @@ using SampleWebAppWithMongoDbAndDocker.ViewModels;
 
 namespace SampleWebAppWithMongoDbAndDocker.Controllers
 {
-	[ApiController]
 	[ApiVersion("1.0")]
 	[ApiVersion("2.0")]
 	[Route("api/{version:apiVersion}/[controller]/[action]")]
 	[Authorize(Roles = "teacher, admin")]
-	public class TeacherController : ControllerBase
+	public class TeacherController : ApiBaseController
 	{
 		private readonly IMongoCollection<Teacher> teacherCollection;
 		private readonly IMongoCollection<Role> roleCollection;
@@ -26,24 +25,24 @@ namespace SampleWebAppWithMongoDbAndDocker.Controllers
 
 		//[Authorize(Roles = "admin")]
 		[HttpGet]
-		public JsonResult Get()
+		public IActionResult Get()
 		{
-			return new JsonResult(new { Teachers = teacherCollection.Find("{}").ToList() });
+			return JsonActionResult(new { Teachers = teacherCollection.Find("{}").ToList() });
 		}
 
 		[HttpGet("{id}")]
-		public JsonResult Get(Guid id)
+		public IActionResult Get(Guid id)
 		{
-			return new JsonResult(new { Teacher = teacherCollection.Find(p => p.Id == id).FirstOrDefault() });
+			return JsonActionResult(new { Teacher = teacherCollection.Find(p => p.Id == id).FirstOrDefault() });
 		}
 
 		[AllowAnonymous]
 		[HttpPost]
-		public ActionResult Create([FromBody] CreateTeacherModel newTeacher)
+		public IActionResult Create([FromBody] CreateTeacherModel newTeacher)
 		{
 			if (teacherCollection.Find(p => p.Email == newTeacher.Email).FirstOrDefault() != default)
 			{
-				return BadRequest("This email is used!");
+				return JsonActionResultError(new string[] { "This email is used!" });
 			}
 
 			var teacher = new Teacher
@@ -62,18 +61,18 @@ namespace SampleWebAppWithMongoDbAndDocker.Controllers
 		}
 
 		[HttpPut]
-		public JsonResult Update([FromBody] UpdateTeacherModel newTeacher)
+		public IActionResult Update([FromBody] UpdateTeacherModel newTeacher)
 		{
 			var filter = Builders<Teacher>.Filter.Eq(p => p.Id, newTeacher.Id);
 			var updater = Builders<Teacher>.Update.Set(p => p.Name, newTeacher.Name).Set(p => p.Phone, newTeacher.Phone).Set(p => p.Major, newTeacher.Major);
-			return new JsonResult(new { ModifiedObjectsAmount = teacherCollection.UpdateOne(filter, updater).ModifiedCount });
+			return JsonActionResult(new { ModifiedObjectsAmount = teacherCollection.UpdateOne(filter, updater).ModifiedCount });
 		}
 
 		[HttpDelete("{id}")]
-		public ActionResult Delete(Guid id)
+		public IActionResult Delete(Guid id)
 		{
 			teacherCollection.FindOneAndDelete(p => p.Id == id);
-			return NoContent();
+			return JsonActionResult();
 		}
 	}
 }

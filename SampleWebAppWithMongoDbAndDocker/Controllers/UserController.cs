@@ -11,10 +11,9 @@ using System.Security.Claims;
 
 namespace SampleWebAppWithMongoDbAndDocker.Controllers
 {
-	[ApiController]
 	[ApiVersionNeutral]
 	[Route("api/{version:apiVersion}/[controller]/[action]")]
-	public class UserController : ControllerBase
+	public class UserController : ApiBaseController
 	{
 		private readonly IMongoCollection<Teacher> teacherCollection;
 		private readonly IMongoCollection<Student> studentCollection;
@@ -39,10 +38,10 @@ namespace SampleWebAppWithMongoDbAndDocker.Controllers
 			{
 				await Authenticate(user);
 
-				return Ok();
+				return JsonActionResult();
 			}
 
-			return BadRequest("Not found user");
+			return JsonActionResultError(new string[] { "Not found user" });
 		}
 
 		private async Task Authenticate(User user)
@@ -62,10 +61,10 @@ namespace SampleWebAppWithMongoDbAndDocker.Controllers
 
 		[Authorize]
 		[HttpGet]
-		public async Task<ActionResult> Logout()
+		public async Task<IActionResult> Logout()
 		{
 			await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-			return NoContent();
+			return JsonActionResult();
 		}
 	}
 }
