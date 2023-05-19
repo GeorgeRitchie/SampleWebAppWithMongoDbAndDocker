@@ -8,6 +8,7 @@ services:
       dockerfile: SampleWebAppWithMongoDbAndDocker/Dockerfile
     environment:
       - AddSwaggerToProduction=true
+      - AddHttpsRedirection=false
     depends_on: 
         - mongo
 
@@ -22,7 +23,7 @@ services:
     image: mongo-express
     restart: always
     ports:
-      - 8081:8081
+      - 5050:8081
     environment:
       ME_CONFIG_MONGODB_ADMINUSERNAME: root
       ME_CONFIG_MONGODB_ADMINPASSWORD: example
@@ -33,6 +34,8 @@ services:
     build:
       context: .
       dockerfile: ClientWebApp/Dockerfile
+    environment:
+      - BaseApiAddress=http://host.docker.internal:5000/
     depends_on:
         - samplewebappwithmongodbanddocker
 

@@ -5,6 +5,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 
+string baseApiAddress = Environment.GetEnvironmentVariable("BaseApiAddress")?.ToLower() ?? "http://host.docker.internal:5000/";
+builder.Services.AddScoped(sp => new HttpClient() { BaseAddress = new Uri(baseApiAddress) });
+builder.Services.AddCors();
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
@@ -14,6 +18,8 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors(builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 
 app.UseStaticFiles();
 

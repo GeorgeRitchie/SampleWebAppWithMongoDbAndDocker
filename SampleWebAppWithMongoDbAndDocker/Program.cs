@@ -67,7 +67,10 @@ namespace SampleWebAppWithMongoDbAndDocker
 				});
 			}
 
-			app.UseHttpsRedirection();
+			string addHttpsRedirection = Environment.GetEnvironmentVariable("AddHttpsRedirection")?.ToLower() ?? "true";
+
+			if (app.Environment.IsProduction() || addHttpsRedirection == "true")
+				app.UseHttpsRedirection();
 
 			app.UseCors(builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 
