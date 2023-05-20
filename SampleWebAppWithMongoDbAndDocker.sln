@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SampleWebAppWithMongoDbAndD
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{1EEE2C95-47CF-4A20-A593-37D94844EAE8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientWebApp", "ClientWebApp\ClientWebApp.csproj", "{78C39490-0DCB-4F24-9EE1-1DDA42D26D3F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClientWebApp", "ClientWebApp\ClientWebApp.csproj", "{78C39490-0DCB-4F24-9EE1-1DDA42D26D3F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

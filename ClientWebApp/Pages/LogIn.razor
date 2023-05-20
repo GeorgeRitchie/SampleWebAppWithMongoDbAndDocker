@@ -1,0 +1,55 @@
+﻿@page "/login"
+
+@using Microsoft.AspNetCore.Components.Forms
+
+@inject NavigationManager Navigation
+@inject HttpClient httpClient
+
+<h2>Log In</h2>
+
+<EditForm Model="LoginDto" OnValidSubmit="Submit">
+	<div>
+		<ul class="validation-errors">
+			@foreach (var msg in serverErrMsgs)
+			{
+				<li class="validation-message">@msg</li>
+			}
+		</ul>
+	</div>
+	<DataAnnotationsValidator />
+	<ValidationSummary id="errors" />
+	<p>
+		Email:<br />
+		<InputText @bind-Value="LoginDto.Email" />
+	</p>
+	<p>
+		Password:<br />
+		<InputText @bind-Value="LoginDto.Password" />
+	</p>
+	<button type="submit">Submit</button>
+</EditForm>
+
+@code {
+	private LogInDto LoginDto { get; set; } = new LogInDto();
+	private List<string> serverErrMsgs = new();
+
+	async Task Submit()
+	{
+		serverErrMsgs.Clear();
+
+		var response = await httpClient.GetAsync($"/api/2/user/login?Email={LoginDto.Email}&Password={LoginDto.Password}");
+		JsonResultObject<object>? jsonResult = await response.Content.ReadFromJsonAsync<JsonResultObject<object>>();
+
+		if (jsonResult?.StatusCode == StatusCodes.Status200OK)
+		{
+			Navigation.NavigateTo("/");
+		}
+		else if (jsonResult?.ErrorMessages != null)
+		{
+			foreach (string errMsg in jsonResult.ErrorMessages)
+			{
+				serverErrMsgs.Add(errMsg);
+			}
+		}
+	}
+}
