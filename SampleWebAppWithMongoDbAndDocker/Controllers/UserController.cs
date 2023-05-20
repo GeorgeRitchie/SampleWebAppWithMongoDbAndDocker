@@ -36,7 +36,7 @@ namespace SampleWebAppWithMongoDbAndDocker.Controllers
 
 			if (user != null)
 			{
-				await Authenticate(user);
+				await Authenticate(user, model.RememberMe);
 
 				return JsonActionResult();
 			}
@@ -44,7 +44,7 @@ namespace SampleWebAppWithMongoDbAndDocker.Controllers
 			return JsonActionResultError(new string[] { "Not found user" });
 		}
 
-		private async Task Authenticate(User user)
+		private async Task Authenticate(User user, bool? rememberMe = false)
 		{
 			var roleName = roleCollection.Find(p => p.Id == user.RoleId).First()?.Name ?? "";
 
@@ -56,7 +56,13 @@ namespace SampleWebAppWithMongoDbAndDocker.Controllers
 
 			ClaimsIdentity id = new ClaimsIdentity(claims, "ApplicationCookie", ClaimsIdentity.DefaultNameClaimType, ClaimsIdentity.DefaultRoleClaimType);
 
-			await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(id));
+			var authProp = new AuthenticationProperties();
+			if (rememberMe == true)
+				authProp.IsPersistent = true;
+			else
+				authProp.IsPersistent = false;
+
+			await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(id), authProp);
 		}
 
 		[Authorize]
